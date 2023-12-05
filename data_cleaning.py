@@ -57,14 +57,26 @@ class DataCleaning():
         df = pd.read_csv('card_details_csv.csv')
         print(df)
 
-        # Drop invalid columns
-        columns_to_drop = [df.columns[0], df.columns[5], df.columns[6]]
-        df = df.drop(columns_to_drop, axis=1) 
+        # First and last row are clearly invalid
+        df = df.drop([df.columns[0], df.columns[-1]], axis=1)
+        #Checking info which shows a very high amount of null entries in the 'card_number expiry_date' column
+        print(df.info())
+        # Checking where it is non-null shows that is a combination of card_number and expiry_date, and those respective columns are null for those records
+        print(df[df['card_number expiry_date'].isna() == False])
+
+        # Split the values in the 'card_number expiry_date' column and place them into the correct columns
+        for index, row in df.iterrows():
+            if pd.notna(row['card_number expiry_date']):
+                row_split = row['card_number expiry_date'].split()
+                df.at[index, 'card_number'] = row_split[0]
+                df.at[index, 'expiry_date'] = row_split[1] if len(row_split) > 1 else None
+        # 'card_number expiry_date' column is now fine to be dropped
+        df = df.drop(df.columns[-1], axis=1)
 
         # Looking for any strange repeated data
         for column in df:
             print(df[column].value_counts())
-        df = df.dropna() #Several null values shown so are dropped
+        df = df.dropna() #Some null values shown so are dropped
 
         # Rows with invalid card providers dropped (value counts showed invalid ones only appear once)
         valid_card_providers = {x for x in df['card_provider'] if df['card_provider'].value_counts()[x] > 1}
@@ -76,10 +88,10 @@ class DataCleaning():
         bad_payment_date_indices = (df.loc[pd.to_datetime(df['date_payment_confirmed'], errors='coerce',format='%Y-%m-%d').isnull()]).index
         df['date_payment_confirmed'] = df['date_payment_confirmed'].apply(parse)
         print(df.iloc[bad_payment_date_indices])
-       
+
         # Expiry dates checked to see if they are all MM/YY, and they are
         print(df[~df['expiry_date'].str.match(r'^\d{2}/\d{2}$')])
-        
+
         # Checking most common card number lengths for each card provider
         df.reset_index(drop=True, inplace=True)
         result = df.groupby('card_provider')['card_number'].apply(lambda x: x.str.len().value_counts())
@@ -91,11 +103,11 @@ class DataCleaning():
             card_number = row['card_number']
             if len(card_number) != cardtypes_and_number_of_digits.get(card_provider):
                 print(index, card_provider, card_number)
-        ''' - Evidently several card numbers have question marks so should delete all card numbers with invalid characters.
+        ''' - Evidently several card numbers have question marks so but numbers appear correct if they are stripped
             - Aside from that can't infer that the minority of Discovery/Maestro numbers which don't have 16/12 digits are necessarily invalid
-            - One explicitly invalid VISA 16 digit number that is actually 14 digits at index 13660 to delete'''
-        df = df.drop(13660)
-        df = df[~df['card_number'].str.match(r'[^0-9]')]
+            - There is one explicitly invalid VISA 16 digit number that is actually 14 digits at index 13713
+            - Originally this was dropped but this was reversed after later seeing valid transactions with in the orders_table'''
+        df['card_number'] = df['card_number'].str.replace('?', '', regex=False)
         df.reset_index(drop=True, inplace=True)
 
         return df
@@ -242,7 +254,7 @@ class DataCleaning():
         print(df[~df['user_uuid'].str.match(r'^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$')])
        
         print(df.dtypes)  # Data types check shows all card numbers and quantities are already integers so nothing that can be inferred invalid
-    
+        
         return df
     
     def clean_events_data(self):
@@ -279,8 +291,8 @@ data_cleaning = DataCleaning()
 #cleaned_user_data = data_cleaning.clean_user_data(user_details_df)
 #database_connector.upload_to_db(df=cleaned_user_data, table_name='dim_users')
 
-#cleaned_card_data = data_cleaning.clean_card_data()
-#database_connector.upload_to_db(df=cleaned_card_data, table_name='dim_card_details')
+cleaned_card_data = data_cleaning.clean_card_data()
+database_connector.upload_to_db(df=cleaned_card_data, table_name='dim_card_details')
 
 #cleaned_store_data = data_cleaning.clean_store_data()
 #database_connector.upload_to_db(df=cleaned_store_data, table_name='dim_store_details')
@@ -293,8 +305,8 @@ data_cleaning = DataCleaning()
 #cleaned_orders_data = data_cleaning.clean_orders_data()
 #database_connector.upload_to_db(df=cleaned_orders_data, table_name = 'orders_table')
 
-cleaned_events_data = data_cleaning.clean_events_data()
-database_connector.upload_to_db(df=cleaned_events_data, table_name = 'dim_date_times')
+#cleaned_events_data = data_cleaning.clean_events_data()
+#database_connector.upload_to_db(df=cleaned_events_data, table_name = 'dim_date_times')
 
 
 
