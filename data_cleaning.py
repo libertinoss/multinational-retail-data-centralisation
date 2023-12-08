@@ -19,14 +19,14 @@ class DataCleaning():
         print(' \n Null records: \n', df[df.isnull().any(axis=1)])
         df = df.dropna(axis=0).reset_index(drop=True)
 
-        # Looking for any strange repeated data 
+        # Looking for any strange repeated data and outliers in categorical columns
         for column in df:
             print(df[column].value_counts())
 
         # Looking at categorical columns showed there are clearly records with garbled values
         # Also showed that some country codes written as GGB instead of GB
         df['country_code']= df['country_code'].str.replace('GGB', 'GB') # GGB corrected
-        print('\n Garbled records: \n', df[df['country_code'].str.len() != 2]) # Looking at invalid records
+        print('\n Garbled records: \n', df[df['country_code'].str.len() != 2]) # Looking at invalid records (all country codes should be 2)
         # All of those records were evidently completely invalid across the board so are dropped
         df = df[df['country_code'].str.len() == 2].reset_index(drop=True)
 
@@ -70,7 +70,7 @@ class DataCleaning():
         print(df)
         # First and last columns are clearly invalid so dropped to prevent confusion
         df = df.drop([df.columns[0], df.columns[-1]], axis=1)
-        #Checking info which shows a very high amount of null entries in the 'card_number expiry_date' column
+        # Checking info which shows a very high amount of null entries in the 'card_number expiry_date' column
         print(df.info())
         # Checking where it is non-null shows that is a combination of card_number and expiry_date, and those respective columns are null for those records
         print('\n Records with non-null "card_number expiry_date"  \n', df[df['card_number expiry_date'].isnull() == False])
@@ -88,7 +88,7 @@ class DataCleaning():
         print(' \n Null records: \n', df[df.isnull().any(axis=1)])
         df = df.dropna(axis=0).reset_index(drop=True)
 
-        # Looking for any strange repeated data
+        # Looking for any strange repeated data and outliers in categorical columns
         for column in df:
             print(df[column].value_counts())
 
@@ -129,54 +129,72 @@ class DataCleaning():
         return df
     
     def clean_store_data(self):
-        df = pd.read_csv('store_details_csv.csv')
-        print(df)
 
-        # Looking for invalid columns
-        print(df.info())
-        # Drop invalid columns (unnamed, index, lat)
+        df = pd.read_csv('store_details_csv.csv')
+        pd.set_option('display.max_columns', None)
+        print(df)
+        # Unnamed and index columns unnecessary to to be dropped
+        # lat column appears invalid, quick check for the unique values it contains confirms only nulls and garbled values
+        # These three columns are therefore dropped 
+        print(df['lat'].unique())
         columns_to_drop = [df.columns[0], df.columns[1], df.columns[4]]
         df = df.drop(columns_to_drop, axis=1)
+
+        # Checking info appears to show several rows with null values, and one more than the rest for 'address', 'longitude', 'latitude', 'locality'
+        print(df.info())
         # Viewing null records
-        print(df[(df.isnull()).any(axis=1)])
-        # N/A imputed for null values in first record (webstore) and other rows are dropped
+        print(' \n Null records: \n', df[df.isnull().any(axis=1)])
+        # We can see one of these is the first record (webstore),
+        # 'N/A' imputed for null values in first record (webstore) as the rest of the record is valid and these values understandably have to be N/A
+        # The rest of the records are all completely null so are dropped
         df.loc[0, ['address', 'longitude', 'latitude', 'locality']] = 'N/A'
         df = df.dropna().reset_index(drop=True)
-        print(df)
 
         # Looking for any strange repeated data and outliers in categorical columns
         for column in df:
             print(df[column].value_counts())
 
-        # Drop invalid country codes
+        # Looking at categorical columns showed there are clearly records with garbled values
+        # Also showed that some continent names written as eeAmerica and eeEurope incorrectly
+        df['continent'].replace({'eeEurope': 'Europe', 'eeAmerica': 'America'}, inplace=True) # Continent names corrected
+        print('\n Garbled records: \n', df[df['country_code'].str.len() != 2]) # Looking at invalid records (all country codes should be 2)
+        # All of those records were evidently completely invalid across the board so are dropped
         df = df[df['country_code'].str.len() == 2].reset_index(drop=True)
-        # Fix incorrect continent names
-        df['continent'].replace({'eeEurope': 'Europe', 'eeAmerica': 'America'}, inplace=True)
 
-        # Checking latitudes and longitudes for anything other than digits and a single decimal point (nothing invalid)
-        print(df[df['latitude'].str.match(r'^\d+(\.\d+)?$') == False])
-        print(df[df['longitude'].str.match(r'^\d+(\.\d+)?$') == False])
+        # Define regex patterns to do basic validation on latitude/longtitude, and store_code
+        lat_long_pattern = r'^-?\d+(\.\d+)?$' # Matches decimal numbers (just digits, starting minus, single decimal point allowed)
+        store_code_pattern = r'^[A-Z]{2}-[0-9A-F]{8}$' # Matches the standard store code pattern (XX-XXXXXXXX) where first two chars are uppercase letters and next eight chars are digits/uppercase letters
 
-        # Checking for any store codes not matching standard pattern (nothing invalid)
-        print(df[df['store_code'].str.match(r'^[A-Z]{2}-[0-9A-F]{8}$') == False])
+        # Checking nonconforming latitudes and longitudes shows none
+        print('Regex nonconforming latitudes and longitudes')
+        print(df['latitude'][~df['latitude'].str.match(lat_long_pattern)])
+        print(df['longitude'][~df['longitude'].str.match(lat_long_pattern)])
+        # Checking nonconforming store_codes shows none aside from webstore (which is fine)
+        print('\n Regex nonconforming store codes \n', df['store_code'][~df['store_code'].str.match(r'^[A-Z]{2}-[0-9A-F]{8}$')])
 
-        # Quick check on valid localities and staff numbers (some contain letters but don't necessarily look invalid)
-        print(df['locality'].unique())
-        print(df['staff_numbers'].unique())
+        # Dataset is relatively small so can quickly look over unique values for locality and staff numbers to look for anything obviously invalid
+        print('\n Unique localities: \n', df['locality'].unique())
+        print('\n Unique values for staff numbers: \n', df['staff_numbers'].unique())
+        # Some values for staff numbers contain letters so the associated records are investigated
+        print('\n Records with nonconforming staff numbers: \n', df[pd.to_numeric(df['staff_numbers'], errors='coerce').isnull()])
+        # There doesn't appear to be anything else invalid about the above records
+        # It seems inadvisable to delete records of otherwise entirely valid stores so benefit of the doubt is given and non-numeric characters are simply stripped from these records
+        df['staff_numbers'] = df['staff_numbers'].apply(lambda x: re.sub(r'\D', '', x))
 
         # Incorrectly formatted opening dates parsed and converted as in other methods
-        df.reset_index(drop=True, inplace=True)
-        print(df['opening_date'].loc[pd.to_datetime(df['opening_date'], errors='coerce',format='%Y-%m-%d').isnull()])
-        bad_payment_date_indices = (df.loc[pd.to_datetime(df['opening_date'], errors='coerce',format='%Y-%m-%d').isnull()]).index
+        print('\n Nonconforming opening dates: \n', df['opening_date'][pd.to_datetime(df['opening_date'], errors='coerce',format='%Y-%m-%d').isnull()])
+        bad_opening_date_indices = (df.loc[pd.to_datetime(df['opening_date'], errors='coerce',format='%Y-%m-%d').isnull()]).index
         df['opening_date'] = df['opening_date'].apply(parse)
-        print(df['opening_date'].iloc[bad_payment_date_indices])
+        print('\n Parsed opening dates: \n', df.iloc[bad_opening_date_indices]['opening_date'])
 
         return df
     
     def convert_product_weights(self):
+        
         df = pd.read_csv('product_details.csv')
-
-        df = df.dropna().reset_index(drop=True) #Drop null values
+        # Check for records with null values that would mess with method before beginning
+        print(' \n Null records: \n', df[df.isnull().any(axis=1)])
+        df = df.dropna().reset_index(drop=True)
         
         # Print unique sets of last two characters across weights to get an idea of different units involved
         print(set([weight[-2:] for weight in df['weight'].unique()]))
