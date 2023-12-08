@@ -192,14 +192,20 @@ class DataCleaning():
     def convert_product_weights(self):
         
         df = pd.read_csv('product_details.csv')
-        # Check for records with null values that would mess with method before beginning
+        pd.set_option('display.max_columns', None)
+        # Check for records with null values that would mess with method before beginning conversion
         print(' \n Null records: \n', df[df.isnull().any(axis=1)])
         df = df.dropna().reset_index(drop=True)
-        
+
         # Print unique sets of last two characters across weights to get an idea of different units involved
-        print(set([weight[-2:] for weight in df['weight'].unique()]))
-        # One rogue value at 1772, '77g .' to be fixed directly, garbled values to be fixed below
-        print(df[df['weight'].str[-2:] == ' .'])
+        possible_weight_units = list(set([weight[-2:] for weight in df['weight'].unique()]))
+        print('\n Unique last two chars of weight values \n',possible_weight_units)
+        # This shows possible units as kg, g, ml, oz and some other strange values
+        # The records with other values are investigated further
+        invalid_units = [unit for unit in possible_weight_units if unit not in ['kg', 'ml', 'oz'] and unit[-1] != 'g']
+        print('\n Records with invalid weight units \n', df[df['weight'].str[-2:].isin(invalid_units)])
+        # This shows 4 completed garbled and a rogue weight value of '77g .'
+        # Start with fixing the rogue value directly
         df['weight'] = df['weight'].str.replace('77g .', '77g')
 
         '''
@@ -208,10 +214,10 @@ class DataCleaning():
         - For these values the non-numeric characters are stripped and the total weight is calculated and converted to kg
         - For other possibilities the unit is simply stripped from the end and the value is converted to kg
         - A 1:1 estimate is used for ml to gramme
-        - Garbled values are dropped
+        - Garbled values (not matching one of the standard units) are dropped
         '''
             
-        print(df[df['weight'].str.match(r'^\d+(\.\d+)?(kg|g|ml|oz)$') == False])
+        print('\n Nonstandard weight values \n', df['weight'][~df['weight'].str.match(r'^\d+(\.\d+)?(kg|g|ml|oz)$')])
 
         for index, row in df.iterrows():
             weight = row['weight']
