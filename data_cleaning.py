@@ -9,45 +9,56 @@ class DataCleaning():
         pass
 
     def clean_user_data(self, df):
-        #print(df)
-        # "index" row is clearly innaccurate so is dropped to prevent confusion
-        df.drop(['index'], axis = 1, inplace = True)
-        #print(df)
+        
+        df = pd.read_csv('test.csv')
+        print(df)
+        # Index and unnamed row are unnecessary so dropped to prevent confusion
+        df.drop([df.columns[0], df.columns[1]], axis = 1, inplace = True)
+        # Check for rows with null values shows 21 across all columns. These are clearly invalid records so are dropped
+        print(df.info())
+        print(' \n Null records: \n', df[df.isnull().any(axis=1)])
+        df = df.dropna(axis=0).reset_index(drop=True)
 
         # Looking for any strange repeated data 
         for column in df:
             print(df[column].value_counts())
 
-        # Shows there are 21 rows with NULL values that are then removed
-        df = df[~(df == 'NULL').any(axis=1)]
-        # Also showed GGB mistake which is then corrected
-        df['country_code'].replace({'GGB': 'GB'}, inplace=True)
-        # Drop all other rows with invalid country codes
-        mask_country_code = df['country_code'].str.len() == 2
-        df = df[mask_country_code]
-        for column in df:
-            print(df[column].value_counts()) # Confirms the completely garbled rows are gone in general
+        # Looking at categorical columns showed there are clearly records with garbled values
+        # Also showed that some country codes written as GGB instead of GB
+        df['country_code']= df['country_code'].str.replace('GGB', 'GB') # GGB corrected
+        print('\n Garbled records: \n', df[df['country_code'].str.len() != 2]) # Looking at invalid records
+        # All of those records were evidently completely invalid across the board so are dropped
+        df = df[df['country_code'].str.len() == 2].reset_index(drop=True)
 
+        # Define regex patterns to do basic validation on name columns, email_address and uuid
+        name_pattern = r'^[\w\s-]*$' # Match alphabetic characters, spaces, hyphens
+        email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$' # Standard email regex
+        uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' # Standard uuid regex
+
+        # Check for invalid first and last names, only ones shown contain fullstops and are not invalid so no action taken
+        print('\n Regex nonconforming names: \n', df[['first_name', 'last_name', 'address']][~(df['first_name'].str.match(name_pattern) | ~df['last_name'].str.match(name_pattern))])    
         # Check for invalid email addresses
-        regex_email = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-        print(df['email_address'][~df['email_address'].str.match(regex_email)])
-        # Email addresses with double @'s replaced
-        df['email_address'] = df['email_address'].str.replace('@@', '@')
+        print('\n Regex nonconforming email addresses: \n', df['email_address'][~df['email_address'].str.match(email_pattern)])
+        # All email addresses shown have double @'s which are corrected
+        df['email_address'] = df['email_address'].str.replace('@@','@')
+        # Check for invalid uuids shows none
+        print('\n Regex nonconforming uuids: \n', df['user_uuid'][~df['user_uuid'].str.match(uuid_pattern)])
 
         # Show dob's that don't conform to standard YYYY-MM-DD and their index locations
-        df.reset_index(drop=True, inplace=True)
-        print(df.loc[pd.to_datetime(df['date_of_birth'], errors='coerce',format='%Y-%m-%d').isnull()])
+        print('\n Nonconforming DOBs: \n', df['date_of_birth'][pd.to_datetime(df['date_of_birth'], errors='coerce',format='%Y-%m-%d').isnull()])
         bad_dob_indices = (df.loc[pd.to_datetime(df['date_of_birth'], errors='coerce',format='%Y-%m-%d').isnull()]).index
-        # Convert 'date_of_birth' column to datetime using the custom parser and check dates again
+        # Convert 'date_of_birth' column to datetime using the custom parser and check dates again - all look good
         df['date_of_birth'] = df['date_of_birth'].apply(parse)
-        print(df.iloc[bad_dob_indices])
-        # Repeat for join date 
-        print(df.loc[pd.to_datetime(df['join_date'], errors='coerce',format='%Y-%m-%d').isnull()])
+        print('\n Parsed DOBs: \n', df.iloc[bad_dob_indices]['date_of_birth'])
+
+        # Repeat same process for join date 
+        print('\n Nonconforming join dates: \n', df['join_date'][pd.to_datetime(df['join_date'], errors='coerce',format='%Y-%m-%d').isnull()])
         bad_jd_indices = (df.loc[pd.to_datetime(df['join_date'], errors='coerce',format='%Y-%m-%d').isnull()]).index
         df['join_date'] = df['join_date'].apply(parse)
-        print(df.iloc[bad_jd_indices])
+        print('\n Parsed join dates: \n',df.iloc[bad_jd_indices]['join_date'])
 
-        #Clean phone numbers by removing "(0)"s then stripping non-digit characters except 'x' and leading '+'
+        # Too many variations of phone numbers for sensible validation, but worth standardising
+        # Cleaned by removing "(0)"s then stripping non-digit characters except 'x' and leading '+'
         df['phone_number'] = df['phone_number'].str.replace('(0)', '')
         df['phone_number'] = df['phone_number'].apply(lambda x: re.sub(r'[^\dx+]', '', x))
 
