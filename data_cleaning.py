@@ -9,11 +9,11 @@ class DataCleaning():
         pass
 
     def clean_user_data(self, df):
-        
+
         df = pd.read_csv('test.csv')
         print(df)
         # Index and unnamed row are unnecessary so dropped to prevent confusion
-        df.drop([df.columns[0], df.columns[1]], axis = 1, inplace = True)
+        df = df.drop([df.columns[0], df.columns[1]], axis=1)
         # Check for rows with null values shows 21 across all columns. These are clearly invalid records so are dropped
         print(df.info())
         print(' \n Null records: \n', df[df.isnull().any(axis=1)])
@@ -65,15 +65,15 @@ class DataCleaning():
         return df
     
     def clean_card_data(self):
+        
         df = pd.read_csv('card_details_csv.csv')
         print(df)
-
-        # First and last row are clearly invalid
+        # First and last columns are clearly invalid so dropped to prevent confusion
         df = df.drop([df.columns[0], df.columns[-1]], axis=1)
         #Checking info which shows a very high amount of null entries in the 'card_number expiry_date' column
         print(df.info())
         # Checking where it is non-null shows that is a combination of card_number and expiry_date, and those respective columns are null for those records
-        print(df[df['card_number expiry_date'].isna() == False])
+        print('\n Records with non-null "card_number expiry_date"  \n', df[df['card_number expiry_date'].isnull() == False])
 
         # Split the values in the 'card_number expiry_date' column and place them into the correct columns
         for index, row in df.iterrows():
@@ -84,42 +84,47 @@ class DataCleaning():
         # 'card_number expiry_date' column is now fine to be dropped
         df = df.drop(df.columns[-1], axis=1)
 
+        # Other records containing any null values checked, clearly invalid so are dropped
+        print(' \n Null records: \n', df[df.isnull().any(axis=1)])
+        df = df.dropna(axis=0).reset_index(drop=True)
+
         # Looking for any strange repeated data
         for column in df:
             print(df[column].value_counts())
-        df = df.dropna() #Some null values shown so are dropped
 
-        # Rows with invalid card providers dropped (value counts showed invalid ones only appear once)
+        # Looking at categorical columns showed there are clearly records with garbled values
+        # Start with dropping all records with invalid card providers (which evidently only appeared in value counts only once)
         valid_card_providers = {x for x in df['card_provider'] if df['card_provider'].value_counts()[x] > 1}
-        df = df[df['card_provider'].isin(valid_card_providers)]
+        df = df[df['card_provider'].isin(valid_card_providers)].reset_index(drop=True)
 
         # Incorrectly formatted payment dates parsed and converted as in clean_user_data method
-        df.reset_index(drop=True, inplace=True)
-        print(df.loc[pd.to_datetime(df['date_payment_confirmed'], errors='coerce',format='%Y-%m-%d').isnull()])
+        print('\n Nonconforming payment dates: \n', df['date_payment_confirmed'][pd.to_datetime(df['date_payment_confirmed'], errors='coerce',format='%Y-%m-%d').isnull()])
         bad_payment_date_indices = (df.loc[pd.to_datetime(df['date_payment_confirmed'], errors='coerce',format='%Y-%m-%d').isnull()]).index
         df['date_payment_confirmed'] = df['date_payment_confirmed'].apply(parse)
-        print(df.iloc[bad_payment_date_indices])
+        print('\n Parsed payment dates: \n',df.iloc[bad_payment_date_indices]['date_payment_confirmed'])
 
         # Expiry dates checked to see if they are all MM/YY, and they are
         print(df[~df['expiry_date'].str.match(r'^\d{2}/\d{2}$')])
 
         # Checking most common card number lengths for each card provider
         df.reset_index(drop=True, inplace=True)
-        result = df.groupby('card_provider')['card_number'].apply(lambda x: x.str.len().value_counts())
-        print(result)
-        # These are then placed in a dictionary and validated against data to display possible nonconforming values
+        print('\n Card provider - Card Length - Number of records \n', df.groupby('card_provider')['card_number'].apply(lambda x: x.str.len().value_counts()))
+        # The most common card number length from each is placed in a dictionary and validated against data to display possible nonconforming values
         cardtypes_and_number_of_digits = df.groupby('card_provider')['card_number'].apply(lambda x: x.str.len().value_counts().idxmax()).to_dict()
+        print('\n Possible non-conforming card numbers: \n')
         for index, row in df.iterrows():
             card_provider = row['card_provider']
             card_number = row['card_number']
             if len(card_number) != cardtypes_and_number_of_digits.get(card_provider):
                 print(index, card_provider, card_number)
-        ''' - Evidently several card numbers have question marks so but numbers appear correct if they are stripped
+                
+        ''' - Evidently several card numbers have question marks but numbers are correct when they are stripped of these and the code run again
             - Aside from that can't infer that the minority of Discovery/Maestro numbers which don't have 16/12 digits are necessarily invalid
-            - There is one explicitly invalid VISA 16 digit number that is actually 14 digits at index 13713
-            - Originally this was dropped but this was reversed after later seeing valid transactions with in the orders_table'''
-        df['card_number'] = df['card_number'].str.replace('?', '', regex=False)
-        df.reset_index(drop=True, inplace=True)
+            - There is one explicitly invalid VISA 16 digit number that is actually 14 digits at index 13713 (card no. 46026611441111)
+            - Originally this was dropped but this was reversed after later seeing valid transactions with it in the orders_table which imply it is somehow...valid
+        '''
+
+        df['card_number'] = df['card_number'].str.replace('?', '')
 
         return df
     
