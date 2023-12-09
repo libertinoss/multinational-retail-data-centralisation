@@ -243,7 +243,7 @@ class DataCleaning():
         return df
     
     def clean_products_data(self, df):
-        
+
         df = pd.read_csv('product_details_weights_converted.csv')
         pd.set_option('display.max_columns', None)
         print(df)
@@ -282,21 +282,27 @@ class DataCleaning():
         return df
     
     def clean_orders_data(self):
+        
         df = pd.read_csv('orders_table.csv')
+        pd.set_option('display.max_columns', None)
         print(df)
-        # Looking for invalid columns
         print(df.info())
-        # Drop invalid columns 'unnamed', 'level_0', 'index', 'first_name', 'last_name', '1'
+        # 'unnamed', 'level_0', 'index', 'first_name', 'last_name', '1' all look to be invalid columns so are dropped
         columns_to_drop = [df.columns[0], df.columns[1], df.columns[2], df.columns[4], df.columns[5], df.columns[10]]
         df = df.drop(columns_to_drop, axis=1)
-        print(df)
 
-        # Quick check to validate store codes and uuids, showing nothing wrong
-        print((df['store_code'][df['store_code'].str.match(r'^[A-Z]{2}-[0-9A-F]{8}$') == False]).unique())
-        print(df[~df['date_uuid'].str.match(r'^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$')])
-        print(df[~df['user_uuid'].str.match(r'^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$')])
-       
-        print(df.dtypes)  # Data types check shows all card numbers and quantities are already integers so nothing that can be inferred invalid
+        # Define regex patterns to do basic validation on uuids, store codes and product codes
+        # Info already showed card numbers and quantities are already integers so nothing that can be inferred invalid there
+        uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' # Standard uuid regex
+        store_code_pattern = r'^[A-Z]{2}-[0-9A-F]{8}$' # Matches the standard store code pattern (XX-XXXXXXXX) where first two chars are uppercase letters and next eight chars are digits/uppercase letters
+        product_code_pattern = r'^[a-zA-Z][0-9]-[a-zA-Z0-9]*$' # Regex for apparent product code pattern, alphabetic first char, numeric second char, then hyphen followed by string of alphanumeric characters
+
+        # Check for invalid uuids shows none
+        print('\n Regex nonconforming uuids: \n', df[['date_uuid', 'user_uuid']][~(df['date_uuid'].str.match(uuid_pattern) | ~df['user_uuid'].str.match(uuid_pattern))]) 
+        # Check for invalid store codes shows none
+        print('\n Regex nonconforming store codes: \n', df[['store_code']][~(df['store_code'].str.match(store_code_pattern)) & (df['store_code'] != 'WEB-1388012W')])
+        # Check for invalid product codes shows none
+        print('\n Regex nonconforming product codes: \n', df[['product_code']][~df['product_code'].str.match(product_code_pattern)])
         
         return df
     
