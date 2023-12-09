@@ -44,10 +44,13 @@ class DatabaseConnector():
             print(table_name)
 
     def upload_to_db(self, df, table_name):
-        local_creds = self.read_db_creds(filename='local_db_creds.yaml')
-        print(local_creds)
-        engine = create_engine(f"postgresql+psycopg2://{local_creds['USER']}:{local_creds['PASSWORD']}@localhost:5432/sales_data")
-        df.to_sql(table_name, engine) 
+        try:
+            local_creds = self.read_db_creds(filename='local_db_creds.yaml')
+            engine = create_engine(f"postgresql+psycopg2://{local_creds['USER']}:{local_creds['PASSWORD']}@localhost:5432/sales_data")
+            df.to_sql(table_name, engine)
+            print(f"Successfully uploaded data to {table_name} in the database.")
+        except Exception as e:
+            print(f"Error uploading data to the database: {e}")
 
 
         
