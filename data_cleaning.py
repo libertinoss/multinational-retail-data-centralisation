@@ -282,7 +282,7 @@ class DataCleaning():
         return df
     
     def clean_orders_data(self):
-        
+
         df = pd.read_csv('orders_table.csv')
         pd.set_option('display.max_columns', None)
         print(df)
@@ -307,23 +307,24 @@ class DataCleaning():
         return df
     
     def clean_events_data(self):
-        df = pd.read_json('date_details.json')
-        print(df)
 
-        # Checking for null values and invalid columns, nothing shown
+        df = pd.read_json('date_details.json')
+        # Printing df and looking at info doesn't show any invalid columns or null values
+        print(df)
         print(df.info())
 
         # Looking for any strange repeated data and outliers in categorical columns
+        # This showed several rows containing 'NULL' string
         for column in df:
             print(df[column].value_counts())
 
-        # Checking rows containing 'NULL' string, all invalid so are dropped
-        print(df[(df == 'NULL').any(axis=1)])
+        # Investigating these rows shows them all to be completely valid so are dropped 
+        print('\n, Rows with NULL: \n', df[(df == 'NULL').any(axis=1)])
         df = df[~(df == 'NULL').any(axis=1)].reset_index(drop=True)
 
         # Check to see which rows don't conform to standard timestamp format
         timestamp_as_datetime = pd.to_datetime(df['timestamp'], format='%H:%M:%S', errors='coerce')
-        print(df[timestamp_as_datetime.isnull()])
+        print('\n Invalid timestamps: \n', df[timestamp_as_datetime.isnull()])
         # Those rows are all garbled values so are just dropped completely
         df = df[~timestamp_as_datetime.isnull()].reset_index(drop=True)
 
@@ -331,8 +332,9 @@ class DataCleaning():
         for column in df:
             print(df[column].value_counts())
 
-        # Quick check to validate date_uuid which shows no issues
-        print(df[~df['date_uuid'].str.match(r'^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$')])
+        # Quick check to validate date_uuid which shows nothing invalid
+        uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' # Standard uuid regex
+        print('\n Regex nonconforming uuids: \n', df[['date_uuid']][~df['date_uuid'].str.match(uuid_pattern)]) 
 
         return df
 
