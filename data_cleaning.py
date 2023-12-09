@@ -170,7 +170,7 @@ class DataCleaning():
         print(df['latitude'][~df['latitude'].str.match(lat_long_pattern)])
         print(df['longitude'][~df['longitude'].str.match(lat_long_pattern)])
         # Checking nonconforming store_codes shows none aside from webstore (which is fine)
-        print('\n Regex nonconforming store codes \n', df['store_code'][~df['store_code'].str.match(r'^[A-Z]{2}-[0-9A-F]{8}$')])
+        print('\n Regex nonconforming store codes \n', df['store_code'][~df['store_code'].str.match(store_code_pattern)])
 
         # Dataset is relatively small so can quickly look over unique values for locality and staff numbers to look for anything obviously invalid
         print('\n Unique localities: \n', df['locality'].unique())
@@ -238,43 +238,46 @@ class DataCleaning():
         # Convert weight column to float and rename column for clarity
         df['weight'] = df['weight'].astype(float)
         df = df.rename(columns={'weight': 'weight_kg'})
-
+        df.to_csv('product_details_weights_converted.csv')
+        
         return df
     
     def clean_products_data(self, df):
+        
+        df = pd.read_csv('product_details_weights_converted.csv')
+        pd.set_option('display.max_columns', None)
         print(df)
-        # Looking for invalid columns
+        # First two unnamed columns unncecessary so are dropped
+        df = df.drop([df.columns[0], df.columns[1]], axis=1)
+        # Check info for null values but none shown
         print(df.info())
-        # Drop invalid column 'unnamed'
-        df = df.drop(df.columns[0], axis=1)
-
-        # Check for null values, these are all completely invalid records so are dropped
-        print(df[(df.isnull()).any(axis=1)])
-        df = df.dropna().reset_index(drop=True)
 
         # Looking for any strange repeated data and outliers in categorical columns
+        # Doesn't show any obvious invalid data
         for column in df:
             print(df[column].value_counts())
 
         # Strip product prices of pound character and rename column for clarity
         df = df.rename(columns={'product_price': 'product_price_gbp'})
         df['product_price_gbp'] = df['product_price_gbp'].str.replace('£', '')
-        # Check for price values which aren't standard real numbers. This shows records with completely garbled values which are dropped
-        print(df[df['product_price_gbp'].str.match(r'^\d+(\.\d+)?$') == False])
-        df = df[df['product_price_gbp'].str.match(r'^\d+(\.\d+)?$') == True].reset_index(drop=True)
 
-        # Checking for invalid EAN numbers (any characters other than numeric digits), none shown
-        print(df[df['EAN'].str.match(r'[^0-9]')])
+        # Define regex patterns to do basic validation on product price, uuid and product code
+        product_price_pattern = r'^\d+(\.\d{2})?$' # Matches decimal numbers for prices (just digits with a decimal point and explicitly two digits after it)
+        uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' # Standard uuid regex
+        product_code_pattern = r'^[a-zA-Z][0-9]-[a-zA-Z0-9]*$' # Regex for apparent product code pattern, alphabetic first char, numeric second char, then hyphen followed by string of alphanumeric characters
 
-        # Checking for invalid uuid (anything that doesn't meet standard pattern), none shown
-        print(df[~df['uuid'].str.match(r'^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$')])
+        # Check for invalid product prices shows none
+        print('\n Regex nonconforming product prices: \n', df[['product_price_gbp']][~df['product_price_gbp'].str.match(product_price_pattern)]) 
+        # Check for invalid uuids shows none
+        print('\n Regex nonconforming uuids: \n', df[['uuid']][~df['uuid'].str.match(uuid_pattern)]) 
+        # Check for invalid product codes shows none
+        print('\n Regex nonconforming product codes: \n', df[['product_code']][~df['product_code'].str.match(product_code_pattern)])
 
         # Dates checked and parsed as previously 
-        df.reset_index(drop=True, inplace=True)
-        print(df['date_added'].loc[pd.to_datetime(df['date_added'], errors='coerce',format='%Y-%m-%d').isnull()])
-        bad_date_indices = (df.loc[pd.to_datetime(df['date_added'], errors='coerce',format='%Y-%m-%d').isnull()]).index
+        print('\n Nonconforming dates: \n', df['date_added'][pd.to_datetime(df['date_added'], errors='coerce',format='%Y-%m-%d').isnull()])
+        bad_date_added_indices = (df.loc[pd.to_datetime(df['date_added'], errors='coerce',format='%Y-%m-%d').isnull()]).index
         df['date_added'] = df['date_added'].apply(parse)
-        print(df['date_added'].iloc[bad_date_indices])
+        print('\n Parsed dates: \n', df.iloc[bad_date_added_indices]['date_added'])
 
         return df
     
