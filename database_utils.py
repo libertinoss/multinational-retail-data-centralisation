@@ -7,9 +7,17 @@ class DatabaseConnector():
         self.engine = self.init_db_engine()
 
     def read_db_creds(self, filename='aws_db_creds.yaml'):
-        with open(filename, 'r') as file:
-            db_creds = yaml.safe_load(file)
-        return db_creds
+        try:
+            with open(filename, 'r') as file:
+                db_creds = yaml.safe_load(file)
+            print(f"File '{filename}' successfully read.")
+            return db_creds
+        except FileNotFoundError:
+            print(f"File '{filename}' not found.")
+            return None 
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
         
     def init_db_engine(self):
         DATABASE_TYPE = 'postgresql'
@@ -19,12 +27,19 @@ class DatabaseConnector():
         PASSWORD = self.db_creds['PASSWORD']
         PORT = self.db_creds['PORT']
         DATABASE = 'postgres'
-        engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
-        engine.connect()
+
+        try:
+            engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{ENDPOINT}:{PORT}/{DATABASE}")
+            engine.connect()
+            print("Database engine successfully connected.")
+        except Exception as e:
+            print(f"Could not connect to database because of the error: {e}")
+
         return engine
     
     def list_db_tables(self):
         inspector = inspect(self.engine)
+        print("\nThe tables in the database are as follows:\n")
         for table_name in inspector.get_table_names():
             print(table_name)
 
@@ -39,7 +54,7 @@ class DatabaseConnector():
 
 database_connector = DatabaseConnector()
 
-if __name__ == "__main__":
-    database_connector.list_db_tables()
+#if __name__ == "__main__":
+   # database_connector.list_db_tables()
 
         

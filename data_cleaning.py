@@ -318,7 +318,7 @@ class DataCleaning():
         for column in df:
             print(df[column].value_counts())
 
-        # Investigating these rows shows them all to be completely valid so are dropped 
+        # Investigating these rows shows them all to be completely invalid so are dropped 
         print('\n, Rows with NULL: \n', df[(df == 'NULL').any(axis=1)])
         df = df[~(df == 'NULL').any(axis=1)].reset_index(drop=True)
 
@@ -342,8 +342,8 @@ data_cleaning = DataCleaning()
 #cleaned_user_data = data_cleaning.clean_user_data(user_details_df)
 #database_connector.upload_to_db(df=cleaned_user_data, table_name='dim_users')
 
-cleaned_card_data = data_cleaning.clean_card_data()
-database_connector.upload_to_db(df=cleaned_card_data, table_name='dim_card_details')
+#cleaned_card_data = data_cleaning.clean_card_data()
+#database_connector.upload_to_db(df=cleaned_card_data, table_name='dim_card_details')
 
 #cleaned_store_data = data_cleaning.clean_store_data()
 #database_connector.upload_to_db(df=cleaned_store_data, table_name='dim_store_details')

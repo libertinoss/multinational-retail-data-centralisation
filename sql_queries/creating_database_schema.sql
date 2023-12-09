@@ -71,8 +71,9 @@ UPDATE dim_store_details
     WHERE
         store_type = 'Web Portal'
 
+/*
 UPDATE dim_store_details -- stripping staff_numbers column of characters so it can be cast to smallint
-SET staff_numbers = regexp_replace(staff_numbers, '[^0-9]+', '', 'g');
+SET staff_numbers = regexp_replace(staff_numbers, '[^0-9]+', '', 'g');*/
 
 ALTER TABLE dim_store_details
     ALTER COLUMN longitude TYPE FLOAT USING longitude::float,
