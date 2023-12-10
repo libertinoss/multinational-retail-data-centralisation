@@ -356,25 +356,6 @@ class DataCleaning():
         return df
 
 data_cleaning = DataCleaning()
-#cleaned_user_data = data_cleaning.clean_user_data(user_details_df)
-#database_connector.upload_to_db(df=cleaned_user_data, table_name='dim_users')
-
-#cleaned_card_data = data_cleaning.clean_card_data()
-#database_connector.upload_to_db(df=cleaned_card_data, table_name='dim_card_details')
-
-#cleaned_store_data = data_cleaning.clean_store_data()
-#database_connector.upload_to_db(df=cleaned_store_data, table_name='dim_store_details')
-
-#products_data_weights_converted = data_cleaning.convert_product_weights()
-#cleaned_products_data = data_cleaning.clean_products_data(products_data_weights_converted)
-
-#database_connector.upload_to_db(df=cleaned_products_data, table_name='dim_products')
-
-#cleaned_orders_data = data_cleaning.clean_orders_data()
-#database_connector.upload_to_db(df=cleaned_orders_data, table_name = 'orders_table')
-
-#cleaned_events_data = data_cleaning.clean_events_data()
-#database_connector.upload_to_db(df=cleaned_events_data, table_name = 'dim_date_times')
 
 
 

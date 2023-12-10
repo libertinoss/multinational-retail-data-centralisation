@@ -48,12 +48,12 @@ def clean_and_upload_datasets():
     database_connector.upload_to_db(df=cleaned_events_data_df, table_name = 'dim_date_times_')
 
 
-#extract_user_data()
-#extract_card_data()
-#extract_stores_data()
-#extract_product_data()
-#extract_orders_data()
-#extract_events_data()
+extract_user_data()
+extract_card_data()
+extract_stores_data()
+extract_product_data()
+extract_orders_data()
+extract_events_data()
 clean_and_upload_datasets()
 
 

@@ -9,10 +9,8 @@ WHERE
     table_name = 'orders_table';
 
 ALTER TABLE orders_table
-    DROP COLUMN index;
-
-ALTER TABLE orders_table
-    ALTER COLUMN date_uuid TYPE UUID USING date_uuid::uuid;
+    ALTER COLUMN date_uuid TYPE UUID USING date_uuid::uuid,
+    ALTER COLUMN user_uuid TYPE UUID USING user_uuid::uuid;
 
 ALTER TABLE orders_table
     ALTER COLUMN card_number TYPE TEXT,
@@ -20,11 +18,11 @@ ALTER TABLE orders_table
     ALTER COLUMN product_code TYPE TEXT;
 
 SELECT --getting maximum lengths for columns to be set as varchar
-    (MAX(LENGTH(card_number))) AS max_card_number_length,
-    (MAX(LENGTH(store_code))) AS max_store_code_length,
-    (MAX(LENGTH(product_code))) AS max_product_code_length
+    (MAX(LENGTH(card_number))) AS max_card_number_length, --19
+    (MAX(LENGTH(store_code))) AS max_store_code_length, --12
+    (MAX(LENGTH(product_code))) AS max_product_code_length --11
 FROM
-    orders_table
+    orders_table;
 
 ALTER TABLE orders_table
     ALTER COLUMN card_number TYPE VARCHAR(19),
@@ -32,7 +30,7 @@ ALTER TABLE orders_table
     ALTER COLUMN product_code TYPE VARCHAR(11);
 
 ALTER TABLE orders_table
-    ALTER COLUMN product_quantity TYPE SMALLINT
+    ALTER COLUMN product_quantity TYPE SMALLINT;
 
 -- Changing dim_users table columns to correct data types
 
@@ -69,11 +67,7 @@ UPDATE dim_store_details
     SET longitude = NULL,
         latitude = NULL
     WHERE
-        store_type = 'Web Portal'
-
-/*
-UPDATE dim_store_details -- stripping staff_numbers column of characters so it can be cast to smallint
-SET staff_numbers = regexp_replace(staff_numbers, '[^0-9]+', '', 'g');*/
+        store_type = 'Web Portal';
 
 ALTER TABLE dim_store_details
     ALTER COLUMN longitude TYPE FLOAT USING longitude::float,
@@ -86,7 +80,7 @@ ALTER TABLE dim_store_details
     ALTER COLUMN country_code TYPE VARCHAR(2),
     ALTER COLUMN continent TYPE VARCHAR(255);
 
-SELECT (MAX(LENGTH(store_code))) FROM dim_store_details;
+SELECT (MAX(LENGTH(store_code))) FROM dim_store_details; --12
 
 ALTER TABLE dim_store_details
     ALTER COLUMN store_code TYPE VARCHAR(12);
@@ -95,12 +89,12 @@ UPDATE dim_store_details
     SET address = 'N/A',
         locality = 'N/A'
     WHERE
-        store_type = 'Web Portal'
+        store_type = 'Web Portal';
 
 -- Making changes to dim_products table by adding weight_class column
 
 ALTER TABLE dim_products
-    ADD COLUMN weight_class TEXT
+    ADD COLUMN weight_class TEXT;
 
 UPDATE dim_products
     SET weight_class = CASE
@@ -122,10 +116,13 @@ FROM
 WHERE
     table_name = 'dim_products';
 
+ALTER TABLE dim_products
+    ALTER COLUMN "EAN" TYPE TEXT; --change to text first rather than bigint so can use length function
+
 SELECT
-    (MAX(LENGTH("EAN"))) AS max_ean_length,
-    (MAX(LENGTH(product_code))) AS max_product_code_length,
-    (MAX(LENGTH(weight_class))) AS max_weight_class_length
+    (MAX(LENGTH("EAN"))) AS max_ean_length, --17
+    (MAX(LENGTH(product_code))) AS max_product_code_length, --11
+    (MAX(LENGTH(weight_class))) AS max_weight_class_length --14
 FROM
     dim_products;
 
@@ -144,11 +141,11 @@ ALTER TABLE dim_products --changing removed column to True/False to then convert
 UPDATE dim_products
     SET still_available = CASE
         WHEN still_available = 'Removed' THEN False
-        WHEN still_available = 'Still_available' THEN True
+        WHEN still_available = 'Still_avaliable' THEN True
     END;
 
 ALTER TABLE dim_products
-    ALTER COLUMN still_available TYPE BOOLEAN using still_available::boolean;
+    ALTER COLUMN still_available TYPE BOOLEAN USING still_available::boolean;
 
 -- Changing dim_date_times table columns to correct data types
 
@@ -161,10 +158,10 @@ WHERE
     table_name = 'dim_date_times';
 
 SELECT 
-    (MAX(LENGTH(month))) AS max_month_length,
-    (MAX(LENGTH(year))) AS max_year_length,
-    (MAX(LENGTH(day))) AS max_day_length,
-    (MAX(LENGTH(time_period))) AS max_time_period
+    (MAX(LENGTH(month))) AS max_month_length, --2 
+    (MAX(LENGTH(year))) AS max_year_length, --4 
+    (MAX(LENGTH(day))) AS max_day_length, --2
+    (MAX(LENGTH(time_period))) AS max_time_period --10
 FROM
     dim_date_times;
 
@@ -173,9 +170,11 @@ ALTER TABLE dim_date_times
     ALTER COLUMN year TYPE VARCHAR (4),
     ALTER COLUMN day TYPE VARCHAR (2),
     ALTER COLUMN time_period TYPE VARCHAR (10),
-    ALTER COLUMN date_uuid TYPE UUID USING date_uuid::uuid;
+    ALTER COLUMN date_uuid TYPE UUID USING date_uuid::uuid,
+    ALTER COLUMN timestamp TYPE TIME using timestamp::time;
 
 -- Changing dim_card_details table columns to correct data types
+
 SELECT
     column_name,
     data_type
@@ -185,8 +184,8 @@ WHERE
     table_name = 'dim_card_details';
 
 SELECT 
-    (MAX(LENGTH(card_number))) AS max_card_number_length,
-    (MAX(LENGTH(expiry_date))) AS max_expiry_date_length
+    (MAX(LENGTH(card_number))) AS max_card_number_length, --19
+    (MAX(LENGTH(expiry_date))) AS max_expiry_date_length --5
 FROM
     dim_card_details;
 
