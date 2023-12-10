@@ -1,3 +1,19 @@
+"""This is the main python file for running the entirety of this multinational data centralisation project. It takes instances of the
+DatabaseConnector, DataExtractor, and DataCleaning classes to extract data from the numerous relevant sources, clean each of the
+obtained datasets in turn, and then upload all of them to a postgresql database. 
+
+It contains the following functions:
+    * extract_user_data - Uses the database_connector object to connect to an Amazon RDS database instance, then the data_extractor to
+      save the user data as a csv file 
+    * extract_card_data - Uses the data_extractor object to download a pdf and collate the card data from all of its pages into a csv file
+    * extract_stores_data - Uses the data_extractor object to get data from each store from their respective API endpoints
+      and collate it all into a csv file
+    * extract_product_data - Uses the data_extractor object to connect to an s3 bucket and download the product data into a csv file
+    * extract_orders_data - Works the same as extract_user_data but for downloading the orders data instead
+    * extract_events_data - Works the same as extract_product_data but for downloading a json file of events (when each sale happened)
+    * clean_and_upload_datasets - Cleans every dataset in turn and uploads them to separate tables in a postgresql database
+"""
+
 import pandas as pd
 from database_utils import database_connector # Constructor automatically runs methods to read database credentials and initialise a SQL alchemy database engine
 from data_extraction import data_extractor, api_header
@@ -9,12 +25,12 @@ def extract_user_data():
     user_details_df.to_csv('extracted_data/user_details.csv') # Save as csv for easier handling and troubleshooting
 
 def extract_card_data():
-    # Start with retrieve pdf data function to download pdf, concatenate tables across pages and store in a dataframe
+    # Use retrieve pdf data function to download pdf, concatenate tables across pages and store in a dataframe
     card_details_df = data_extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf', 'extracted_data/card_details.pdf')
     card_details_df.to_csv('extracted_data/card_details.csv') 
 
 def extract_stores_data():
-    # Start with retrieving the number of stores using an API
+    # Retrieves the number of stores using an API, then use that to retrieve the data from each respective endpoint
     number_of_stores = data_extractor.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', api_header)
     store_details_df = data_extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/', api_header, number_of_stores)
     store_details_df.to_csv('extracted_data/store_details.csv') 
@@ -40,13 +56,12 @@ def clean_and_upload_datasets():
     cleaned_orders_data_df = data_cleaning.clean_orders_data('extracted_data/order_details.csv')
     cleaned_events_data_df = data_cleaning.clean_events_data('extracted_data/event_details.json')
 
-    database_connector.upload_to_db(df=cleaned_user_data_df, table_name='dim_users_')  ###############remove underscores at very end
-    database_connector.upload_to_db(df=cleaned_card_data_df, table_name='dim_card_details_')
-    database_connector.upload_to_db(df=cleaned_store_data_df, table_name='dim_store_details_')
-    database_connector.upload_to_db(df=cleaned_products_data_df, table_name='dim_products_')
-    database_connector.upload_to_db(df=cleaned_orders_data_df, table_name = 'orders_table_')
-    database_connector.upload_to_db(df=cleaned_events_data_df, table_name = 'dim_date_times_')
-
+    database_connector.upload_to_db(df=cleaned_user_data_df, table_name='dim_users')  
+    database_connector.upload_to_db(df=cleaned_card_data_df, table_name='dim_card_details')
+    database_connector.upload_to_db(df=cleaned_store_data_df, table_name='dim_store_details')
+    database_connector.upload_to_db(df=cleaned_products_data_df, table_name='dim_products')
+    database_connector.upload_to_db(df=cleaned_orders_data_df, table_name = 'orders_table')
+    database_connector.upload_to_db(df=cleaned_events_data_df, table_name = 'dim_date_times')
 
 extract_user_data()
 extract_card_data()
