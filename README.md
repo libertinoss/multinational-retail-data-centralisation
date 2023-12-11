@@ -42,7 +42,7 @@ The files in the **sql_queries/** folder contain numerous queries that are clear
 
 ### SQL Files (.sql)
 - *creating_database_schema.sql* - SQL queries for creating database schema, including setting data types and primary and foreign key constraints
-- *querying_data_for_metrics.sql* - SQL queries for obtaining a range of business metrics surrounding sales through the usage aggregate functions, joins, subqueries etc
+- *querying_data_for_metrics.sql* - SQL queries for obtaining a range of business metrics surrounding sales through the usage of aggregate functions, joins, subqueries etc
   
 ### Extracted Data Files
 These are the files containing the raw data from the numerous sources mentioned above, which are then used by the functions in the **data_extraction.py** module. They are downloaded automatically into this location upon running the **__main__.py** script but are included here for clarity, as some of the extraction methods require credentials that are not included in this remote directory.
