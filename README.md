@@ -10,6 +10,8 @@ This project was created and tested using Python 3.11.4 and PostgreSQL 16. The e
 ## Execution Workflow
 As mentioned previously, running the **__main__.py** script executes the entire data pipeline. To add clarity for the user, there are status updates and relevant messages displayed throughout the execution of each individual extraction, cleaning and uploading function so it is clear what is happening at every stage. There is also basic error handling for common issues that might occur, indicating what is causing the problem. The code for data cleaning includes numerous print statements which indicate the overall workflow and logic of how each individual dataset was cleaned, but this is only displayed when the **__data_cleaning.py__** script is run directly so as to prevent unnecessary output clutter.
 
+The files in the **sql_queries/** folder contain numerous queries that are clearly annotated as to what they are achieving in terms of database alterations and obtaining business metrics. They should be run in the order that they have been written in the .sql files to achieve the desired results.
+
 ## File structure
 ```
 ├── __main__.py
