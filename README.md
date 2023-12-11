@@ -18,7 +18,6 @@ The files in the **sql_queries/** folder contain numerous queries that are clear
 ├── database_utils.py
 ├── data_extraction.py
 ├── data_cleaning.py
-├── extracted_data
 ├── sql_queries
 |    ├── creating_database_schema.sql
 |    └── querying_data_for_metrics.sql
@@ -37,6 +36,7 @@ The files in the **sql_queries/** folder contain numerous queries that are clear
 - *\__main\__.py* - Main script for the complete data pipeline
 - *database_utils.py* - Code for establishing connection to and interface with local and cloud-based SQL databases
 - *data_extraction.py* - Code for extracting relevant datasets from a range of sources online (Amazon RDS instance, S3 bucket, pdf table, AWS API endpoint)
+- *data_cleaning.py* - Code for cleaning each dataset with a variety of techniques within the Pandas library
 
 ### SQL Files (.sql)
 
