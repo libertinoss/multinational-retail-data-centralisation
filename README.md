@@ -22,7 +22,7 @@ The files in the **sql_queries/** folder contain numerous queries that are clear
 ├── sql_queries
 |    ├── creating_database_schema.sql
 |    └── querying_data_for_metrics.sql
-└── sql_queries
+└── extracted_data
     ├── card_details.csv
     ├── card_details.pdf
     ├── event_details.json
