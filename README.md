@@ -12,9 +12,7 @@ As
 
 ## File structure
 ```
-├── **__main__.py**
-├── aws_db_creds.yaml
-├── local_db_creds.yaml
+├── __main__.py
 ├── data_cleaning.py
 ├── data_extraction.py
 ├── database_utils.py
@@ -31,7 +29,11 @@ As
     ├── creating_database_schema.sql
     └── querying_data_for_metrics.sql
 ```
+### Python Files
 
+### SQL Files
+
+### Extracted Data Files
 
 
 
