@@ -15,23 +15,27 @@ The files in the **sql_queries/** folder contain numerous queries that are clear
 ## File structure
 ```
 ├── __main__.py
-├── data_cleaning.py
-├── data_extraction.py
 ├── database_utils.py
+├── data_extraction.py
+├── data_cleaning.py
 ├── extracted_data
-│   ├── card_details.csv
-│   ├── card_details.pdf
-│   ├── event_details.json
-│   ├── order_details.csv
-│   ├── product_details.csv
-│   ├── product_details_weights_converted.csv
-│   ├── store_details.csv
-│   └── user_details.csv
+├── sql_queries
+|    ├── creating_database_schema.sql
+|    └── querying_data_for_metrics.sql
 └── sql_queries
-    ├── creating_database_schema.sql
-    └── querying_data_for_metrics.sql
+    ├── card_details.csv
+    ├── card_details.pdf
+    ├── event_details.json
+    ├── order_details.csv
+    ├── product_details.csv
+    ├── product_details_weights_converted.csv
+    ├── store_details.csv
+    └── user_details.csv
+
 ```
 ### Python Files
+- *\__main\__.py* - Main script for the complete data pipeline
+- * 
 
 ### SQL Files
 
