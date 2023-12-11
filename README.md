@@ -7,7 +7,7 @@ The aim of this project was to create a fully functional data pipeline and impro
 ## Installation and Initialisation
 This project was created and tested using Python 3.11.4 and PostgreSQL 16. The entire data pipeline (from data extraction through to cleaning and uploading) can be executed using the **__main__.py** file, and the relevant SQL queries in terms of creating the database schema and obtaining a range of business metrics are in the **sql_queries/** folder in the directory. 
 
-**Before executing any code a local PostgreSQL database names "sales_data" should be created**
+**Before executing any code a local PostgreSQL database names "sales_data" should be created!**
 
 ## Execution Workflow
 As mentioned previously, running the **__main__.py** script executes the entire data pipeline. To add clarity for the user, there are status updates and relevant messages displayed throughout the execution of each individual extraction, cleaning and uploading function so it is clear what is happening at every stage. There is also basic error handling for common issues that might occur, indicating what is causing the problem. The code for data cleaning includes numerous print statements which indicate the overall workflow and logic of how each individual dataset was cleaned, but this is only displayed when the **__data_cleaning.py__** script is run directly so as to prevent unnecessary output clutter.
