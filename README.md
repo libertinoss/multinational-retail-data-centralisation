@@ -5,10 +5,10 @@ This is a project which involves extracting and manipulating the sales data of a
 The aim of this project was to create a fully functional data pipeline and improve my knowledge of various key technologies, such as **Python (Pandas)**, **PostgreSQL** and **AWS (S3)**.
 
 ## Installation and Initialisation
-This project was created and tested using Python 3.11.4 and PostgreSQL 16. The entire data pipeline (from data extraction through to cleaning and uplaoding) can be executed using the **__main__.py** file, and the relevant SQL queries in terms of creating the database schema and obtaining a range of business metrics are in the **sql_queries/** folder in the directory.
+This project was created and tested using Python 3.11.4 and PostgreSQL 16. The entire data pipeline (from data extraction through to cleaning and uploading) can be executed using the **__main__.py** file, and the relevant SQL queries in terms of creating the database schema and obtaining a range of business metrics are in the **sql_queries/** folder in the directory.
 
 ## Execution Workflow
-As 
+As mentioned previously, running the **__main__.py** script executes the entire data pipeline. To add clarity for the user, there are status updates and relevant messages displayed throughout the execution of each extraction, cleaning and uploading function so it is clear what is happening at every stage. There is also basic error handling for common issues that might occur, indicating what is causing the problem. 
 
 ## File structure
 ```
