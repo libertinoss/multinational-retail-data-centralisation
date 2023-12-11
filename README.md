@@ -2,7 +2,7 @@
 
 ## Outline
 This is a project which involves extracting and manipulating the sales data of a fictional retailer. The data is spread across many different sources, making it difficult to access or analyse, so it is collated and loaded into a PostgreSQL database that acts as a single source of truth. The database is then queried for various business metrics.
-The aim of this project was to create a fully functional data pipeline and improve my knowledge of various key technologies, such as **Python (Pandas)**, **PostgreSQL** and **AWS (S3)**.
+The aim of this project was to create a fully functional data pipeline and improve my knowledge of various key technologies, such as **Python (Pandas, Boto3, SQLAlchemy)**, **PostgreSQL** and **AWS**.
 
 ## Installation and Initialisation
 This project was created and tested using Python 3.11.4 and PostgreSQL 16. The entire data pipeline (from data extraction through to cleaning and uploading) can be executed using the **__main__.py** file, and the relevant SQL queries in terms of creating the database schema and obtaining a range of business metrics are in the **sql_queries/** folder in the directory.
