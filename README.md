@@ -33,12 +33,12 @@ The files in the **sql_queries/** folder contain numerous queries that are clear
     └── user_details.csv
 
 ```
-### Python Files
+### Python Files (.py)
 - *\__main\__.py* - Main script for the complete data pipeline
 - *database_utils.py* - Code for establishing connection to and interface with local and cloud-based SQL databases
 - *data_extraction.py* - Code for extracting relevant datasets from a range of sources online (Amazon RDS instance, S3 bucket, pdf table, AWS API endpoint)
 
-### SQL Files
+### SQL Files (.sql)
 
 ### Extracted Data Files
 
