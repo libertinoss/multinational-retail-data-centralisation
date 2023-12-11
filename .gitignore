@@ -2,5 +2,5 @@ aws_db_creds.yaml
 local_db_creds.yaml
 add_to_project.txt
 sql_queries/alternate_answers.sql
-
+__pycache__
 
