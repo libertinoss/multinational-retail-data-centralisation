@@ -3,22 +3,56 @@ import re
 from dateutil.parser import parse
 from database_utils import database_connector
 
-def xprint(*args, **kwargs): #################### explain this later and exceptions with print info as well
+def xprint(*args, **kwargs):
+    """
+    This function is used throughout the methods in the DataCleaning class below as a conditional print
+    function (xprint for exclusive print) so that all of the methods only print information when the
+    data_cleaning module is run directly. This is to avoid clutter in the output when the methods are 
+    being called from __main__.py
+
+    Args:
+        *args: Variable length positional arguments to be printed
+        **kwargs: Variable length keyword arguments to be printed
+    """
     if __name__ == "__main__":
         print(*args, **kwargs)
 
 class DataCleaning():
+    """    
+    This class is used to clean the various datasets that have been extracted using the data_extractor object.
+    Each method is similar, looking for invalid columns, null values, illogical values, incorrectly formatted 
+    etc but they are also specific to the content of each dataset. Each method also involves numerous print
+    statements and exploratory validation that was shown to be unnecessary in cleaning the respective datasets
+    but they have been included to show the logic and general workflow of the process.
+
+    Attributes:
+            uuid_pattern(str): Regex pattern which matches a standard uuid 
+            store_code_pattern(str): Regex pattern which matches the standard store code pattern used across datasets
+            product_code_pattern(ste): Regex pattern which matches the apparent product code pattern used across datasets
+    """    
     def __init__(self):
-        pass
+        # Define regex patterns which are used frequently across methods
+        self.uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' 
+        self.store_code_pattern = r'^[A-Z]{2}-[0-9A-F]{8}$' # (XX-XXXXXXXX) where first two chars are uppercase letters and next eight chars are digits/uppercase letters
+        self.product_code_pattern = r'^[a-zA-Z][0-9]-[a-zA-Z0-9]*$' #Aalphabetic first char, numeric second char, then hyphen followed by string of alphanumeric characters
 
     def clean_user_data(self, file):
+        """
+        This function is used to clean the dataset concerning user details. Starts by dropping null values and 
+        looking at categorical columns to easily find invalid records. Other columns are then validated and
+        dates and phone numbers are all standardised.
 
+        Args:
+                file (str): The file path of the dataset to be read in
+        Returns:
+                df (pandas.DataFrame): Dataframe of cleaned user data
+        """      
         df = pd.read_csv(file)
         xprint(df)
         # Index and unnamed row are unnecessary so dropped to prevent confusion
         df = df.drop([df.columns[0], df.columns[1]], axis=1)
         # Check for rows with null values shows 21 across all columns. These are clearly invalid records so are dropped
-        if __name__ == "__main__":
+        if __name__ == "__main__": # df.info() bypasses conditional logic of xprint function so has just been wrapped in if __name = "__main__" when printed
             print(df.info())
         xprint('\nNull records:\n', df[df.isnull().any(axis=1)])
         df = df.dropna(axis=0).reset_index(drop=True)
@@ -34,10 +68,9 @@ class DataCleaning():
         # All of those records were evidently completely invalid across the board so are dropped
         df = df[df['country_code'].str.len() == 2].reset_index(drop=True)
 
-        # Define regex patterns to do basic validation on name columns, email_address and uuid
+        # Define regex patterns to do basic validation on name columns and email_address
         name_pattern = r'^[\w\s-]*$' # Match alphabetic characters, spaces, hyphens
         email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$' # Standard email regex
-        uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' # Standard uuid regex
 
         # Check for invalid first and last names, only ones shown contain fullstops and are not invalid so no action taken
         xprint('\nRegex nonconforming names:\n', df[['first_name', 'last_name', 'address']][~(df['first_name'].str.match(name_pattern) | ~df['last_name'].str.match(name_pattern))])    
@@ -46,7 +79,7 @@ class DataCleaning():
         # All email addresses shown have double @'s which are corrected
         df['email_address'] = df['email_address'].str.replace('@@','@')
         # Check for invalid uuids shows none
-        xprint('\nRegex nonconforming uuids:\n', df['user_uuid'][~df['user_uuid'].str.match(uuid_pattern)])
+        xprint('\nRegex nonconforming uuids:\n', df['user_uuid'][~df['user_uuid'].str.match(self.uuid_pattern)])
 
         # Show dob's that don't conform to standard YYYY-MM-DD and their index locations
         xprint('\nNonconforming DOBs:\n', df['date_of_birth'][pd.to_datetime(df['date_of_birth'], errors='coerce',format='%Y-%m-%d').isnull()])
@@ -70,7 +103,16 @@ class DataCleaning():
         return df
     
     def clean_card_data(self, file):
-        
+        """
+        This function is used to clean the dataset concerning card details. Similar techniques to those 
+        used in clean_user_data method, but also uses a dictionary of most common values for validation
+        of card number lengths.
+
+        Args:
+                file (str): The file path of the dataset to be read in
+        Returns:
+                df (pandas.DataFrame): Dataframe of cleaned card data
+        """           
         df = pd.read_csv(file)
         xprint(df)
         # First and last columns are clearly invalid so dropped to prevent confusion
@@ -136,7 +178,15 @@ class DataCleaning():
         return df
     
     def clean_store_data(self, file):
+        """
+        This function is used to clean the dataset concerning store details. Techniques similar to those
+        used in other data cleaning methods.
 
+        Args:
+                file (str): The file path of the dataset to be read in
+        Returns:
+                df (pandas.DataFrame): Dataframe of cleaned store data
+        """     
         df = pd.read_csv(file)
         pd.set_option('display.max_columns', None)
         xprint(df)
@@ -169,16 +219,15 @@ class DataCleaning():
         # All of those records were evidently completely invalid across the board so are dropped
         df = df[df['country_code'].str.len() == 2].reset_index(drop=True)
 
-        # Define regex patterns to do basic validation on latitude/longtitude, and store_code
+        # Define regex patterns to do basic validation on latitude/longtitude
         lat_long_pattern = r'^-?\d+(\.\d+)?$' # Matches decimal numbers (just digits, starting minus, single decimal point allowed)
-        store_code_pattern = r'^[A-Z]{2}-[0-9A-F]{8}$' # Matches the standard store code pattern (XX-XXXXXXXX) where first two chars are uppercase letters and next eight chars are digits/uppercase letters
-
+       
         # Checking nonconforming latitudes and longitudes shows none
         xprint('Regex nonconforming latitudes and longitudes')
         xprint(df['latitude'][~df['latitude'].str.match(lat_long_pattern)])
         xprint(df['longitude'][~df['longitude'].str.match(lat_long_pattern)])
         # Checking nonconforming store_codes shows none aside from webstore (which is fine)
-        xprint('\nRegex nonconforming store codes\n', df['store_code'][~df['store_code'].str.match(store_code_pattern)])
+        xprint('\nRegex nonconforming store codes\n', df['store_code'][~df['store_code'].str.match(self.store_code_pattern)])
 
         # Dataset is relatively small so can quickly look over unique values for locality and staff numbers to look for anything obviously invalid
         xprint('\nUnique localities:\n', df['locality'].unique())
@@ -199,7 +248,17 @@ class DataCleaning():
         return df
     
     def convert_product_weights(self, file):
-        
+        """
+        This function is used to standardise all of the product weights in the dataset concerning
+        product details before it is cleaned. Some string manipulation is used to identify different
+        units of weight and volume and the relevant records are all converted to kilograms with respect
+        to their specific units.
+
+        Args:
+                file (str): The file path of the dataset to be read in                                 
+        Returns:
+                df (pandas.DataFrame): Dataframe of raw products data with standardised weights 
+        """             
         df = pd.read_csv(file)
         pd.set_option('display.max_columns', None)
         # Check for records with null values that would mess with method before beginning conversion
@@ -253,7 +312,15 @@ class DataCleaning():
         return df
     
     def clean_products_data(self, file):
+        """
+        This function is used to clean the dataset concerning product details. Techniques similar to
+        those used in other data cleaning methods.
 
+        Args:
+                file (str): The file path of the dataset to be read in                                 
+        Returns:
+                df (pandas.DataFrame): Dataframe of cleaned products data
+        """     
         df = pd.read_csv(file)
         pd.set_option('display.max_columns', None)
         xprint(df)
@@ -272,17 +339,15 @@ class DataCleaning():
         df = df.rename(columns={'product_price': 'product_price_gbp'})
         df['product_price_gbp'] = df['product_price_gbp'].str.replace('£', '')
 
-        # Define regex patterns to do basic validation on product price, uuid and product code
+        # Define regex pattern to do basic validation on product price
         product_price_pattern = r'^\d+(\.\d{2})?$' # Matches decimal numbers for prices (just digits with a decimal point and explicitly two digits after it)
-        uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' # Standard uuid regex
-        product_code_pattern = r'^[a-zA-Z][0-9]-[a-zA-Z0-9]*$' # Regex for apparent product code pattern, alphabetic first char, numeric second char, then hyphen followed by string of alphanumeric characters
-
+    
         # Check for invalid product prices shows none
         xprint('\nRegex nonconforming product prices:\n', df[['product_price_gbp']][~df['product_price_gbp'].str.match(product_price_pattern)]) 
         # Check for invalid uuids shows none
-        xprint('\nRegex nonconforming uuids:\n', df[['uuid']][~df['uuid'].str.match(uuid_pattern)]) 
+        xprint('\nRegex nonconforming uuids:\n', df[['uuid']][~df['uuid'].str.match(self.uuid_pattern)]) 
         # Check for invalid product codes shows none
-        xprint('\nRegex nonconforming product codes:\n', df[['product_code']][~df['product_code'].str.match(product_code_pattern)])
+        xprint('\nRegex nonconforming product codes:\n', df[['product_code']][~df['product_code'].str.match(self.product_code_pattern)])
 
         # Dates checked and parsed as previously 
         xprint('\nNonconforming dates:\n', df['date_added'][pd.to_datetime(df['date_added'], errors='coerce',format='%Y-%m-%d').isnull()])
@@ -294,7 +359,15 @@ class DataCleaning():
         return df
     
     def clean_orders_data(self, file):
+        """
+        This function is used to clean the dataset concerning order details. Techniques similar to
+        those used in other data cleaning methods.
 
+        Args:
+                file (str): The file path of the dataset to be read in                                 |
+        Returns:
+                df (pandas.DataFrame): Dataframe of cleaned orers data
+        """     
         df = pd.read_csv(file)
         pd.set_option('display.max_columns', None)
         xprint(df)
@@ -304,24 +377,26 @@ class DataCleaning():
         columns_to_drop = [df.columns[0], df.columns[1], df.columns[2], df.columns[4], df.columns[5], df.columns[10]]
         df = df.drop(columns_to_drop, axis=1)
 
-        # Define regex patterns to do basic validation on uuids, store codes and product codes
-        # Info already showed card numbers and quantities are already integers so nothing that can be inferred invalid there
-        uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' # Standard uuid regex
-        store_code_pattern = r'^[A-Z]{2}-[0-9A-F]{8}$' # Matches the standard store code pattern (XX-XXXXXXXX) where first two chars are uppercase letters and next eight chars are digits/uppercase letters
-        product_code_pattern = r'^[a-zA-Z][0-9]-[a-zA-Z0-9]*$' # Regex for apparent product code pattern, alphabetic first char, numeric second char, then hyphen followed by string of alphanumeric characters
-
         # Check for invalid uuids shows none
-        xprint('\nRegex nonconforming uuids:\n', df[['date_uuid', 'user_uuid']][~(df['date_uuid'].str.match(uuid_pattern) | ~df['user_uuid'].str.match(uuid_pattern))]) 
+        xprint('\nRegex nonconforming uuids:\n', df[['date_uuid', 'user_uuid']][~(df['date_uuid'].str.match(self.uuid_pattern) | ~df['user_uuid'].str.match(self.uuid_pattern))]) 
         # Check for invalid store codes shows none
-        xprint('\nRegex nonconforming store codes:\n', df[['store_code']][~(df['store_code'].str.match(store_code_pattern)) & (df['store_code'] != 'WEB-1388012W')])
+        xprint('\nRegex nonconforming store codes:\n', df[['store_code']][~(df['store_code'].str.match(self.store_code_pattern)) & (df['store_code'] != 'WEB-1388012W')])
         # Check for invalid product codes shows none
-        xprint('\nRegex nonconforming product codes:\n', df[['product_code']][~df['product_code'].str.match(product_code_pattern)])
+        xprint('\nRegex nonconforming product codes:\n', df[['product_code']][~df['product_code'].str.match(self.product_code_pattern)])
         
         print("Orders data successfully cleaned")
         return df
     
     def clean_events_data(self, file):
+        """
+        This function is used to clean the dataset concerning event details (date and times of when each
+        sales happened). Techniques similar to those used in other data cleaning methods.
 
+        Args:
+                file (str): The file path of the dataset to be read in                                 
+        Returns:
+                df (pandas.DataFrame): Dataframe of cleaned events data
+        """    
         df = pd.read_json(file)
         # Printing df and looking at info doesn't show any invalid columns or null values
         xprint(df)
@@ -348,13 +423,23 @@ class DataCleaning():
             xprint(df[column].value_counts())
 
         # Quick check to validate date_uuid which shows nothing invalid
-        uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' # Standard uuid regex
-        xprint('\nRegex nonconforming uuids:\n', df[['date_uuid']][~df['date_uuid'].str.match(uuid_pattern)]) 
+        xprint('\nRegex nonconforming uuids:\n', df[['date_uuid']][~df['date_uuid'].str.match(self.uuid_pattern)]) 
 
         print("Events data successfully cleaned")
         return df
 
 data_cleaning = DataCleaning()
+
+if __name__ == "__main__":
+    '''Can unncomment as desired to run any methods directly and troubleshoot them etc'''
+    # data_cleaning.clean_user_data('extracted_data/user_details.csv')
+    # data_cleaning.clean_card_data('extracted_data/card_details.csv')
+    # data_cleaning.clean_store_data('extracted_data/store_details.csv')
+    # data_cleaning.convert_product_weights('extracted_data/product_details.csv')
+    # data_cleaning.clean_products_data('extracted_data/product_details_weights_converted.csv') 
+    # data_cleaning.clean_orders_data('extracted_data/order_details.csv')
+    # data_cleaning.clean_events_data('extracted_data/event_details.json')
+    # pass
 
 
 
@@ -363,4 +448,4 @@ data_cleaning = DataCleaning()
 
             
 
-        
+    

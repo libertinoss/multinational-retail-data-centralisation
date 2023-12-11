@@ -13,7 +13,7 @@ class DatabaseConnector():
         self.db_creds = self.read_db_creds()
         self.engine = self.init_db_engine()
 
-    def read_db_creds(filename='aws_db_creds.yaml'):
+    def read_db_creds(self, filename='aws_db_creds.yaml'):
         """
         This function is used to read SQL database credentials, taking the aws credentials in the directory as
         default though can be used for any yaml file with credentials.

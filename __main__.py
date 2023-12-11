@@ -16,7 +16,7 @@ It contains the following functions:
 
 import pandas as pd
 from database_utils import database_connector # Constructor automatically runs methods to read database credentials and initialise a SQL alchemy database engine
-from data_extraction import data_extractor, api_header
+from data_extraction import data_extractor
 from data_cleaning import data_cleaning
 
 def extract_user_data():
@@ -31,8 +31,8 @@ def extract_card_data():
 
 def extract_stores_data():
     # Retrieves the number of stores using an API, then use that to retrieve the data from each respective endpoint
-    number_of_stores = data_extractor.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', api_header)
-    store_details_df = data_extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/', api_header, number_of_stores)
+    number_of_stores = data_extractor.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores')
+    store_details_df = data_extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/', number_of_stores)
     store_details_df.to_csv('extracted_data/store_details.csv') 
 
 def extract_product_data():

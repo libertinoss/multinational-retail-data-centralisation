@@ -16,7 +16,7 @@ class DataExtractor():
     def __init__(self):
         self.api_header = {'x-api-key': 'yFBQbwXe9J3sd6zWVAMrK6lcxxr0q1lr2PT6DDMX'}
 
-    def read_rds_table(database_connector, table_name):
+    def read_rds_table(self, database_connector, table_name):
         """
         This function is used to read the data from a user selected table in an AWS RDS instance and save
         it in a pandas dataframe.
@@ -36,7 +36,7 @@ class DataExtractor():
             print(f"An error occurred while reading the RDS table: {e}")
             return None
     
-    def retrieve_pdf_data(pdf_link, pdf_local_name):
+    def retrieve_pdf_data(self, pdf_link, pdf_local_name):
         """
         This function is used to download a pdf from the internet and collate the data from each page into
         a single pandas dataframe. Because this process is very lengthy for a long pdf it includes a 
@@ -129,7 +129,7 @@ class DataExtractor():
             return None
 
  
-    def extract_from_s3(s3_address, file_name):
+    def extract_from_s3(self, s3_address, file_name):
         """
         This function downloads data from an s3 bucket using a public S3 URI. It splits the URI into the
         name of the S3 bucket and the name of the file within the bucket using a bit of string manipulation
