@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 from dateutil.parser import parse
-from database_utils import database_connector
+
 
 def xprint(*args, **kwargs):
     """
@@ -439,13 +439,3 @@ if __name__ == "__main__":
     # data_cleaning.clean_products_data('extracted_data/product_details_weights_converted.csv') 
     # data_cleaning.clean_orders_data('extracted_data/order_details.csv')
     # data_cleaning.clean_events_data('extracted_data/event_details.json')
-    # pass
-
-
-
-
-
-
-            
-
-    

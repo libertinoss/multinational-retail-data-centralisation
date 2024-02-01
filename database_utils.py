@@ -1,6 +1,7 @@
 import yaml
 from sqlalchemy import create_engine, inspect
 
+
 class DatabaseConnector():
     """    
     This class can be used to connect to local and cloud-based postgresql databases by using a SQLAlchemy engine.
@@ -86,8 +87,5 @@ class DatabaseConnector():
         except Exception as e:
             print(f"Error uploading data to the database: {e}")
       
-      
 database_connector = DatabaseConnector()
-
-
-        
+   

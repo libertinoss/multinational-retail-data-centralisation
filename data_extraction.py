@@ -2,8 +2,9 @@ import pandas as pd
 import requests
 import tabula
 import boto3
+import json
 from tqdm import tqdm
-from database_utils import database_connector
+
 
 class DataExtractor():
     """    
@@ -14,8 +15,9 @@ class DataExtractor():
             api_header (dict): API key for authentication
     """    
     def __init__(self):
-        self.api_header = {'x-api-key': 'yFBQbwXe9J3sd6zWVAMrK6lcxxr0q1lr2PT6DDMX'}
-
+        with open('api_key.json') as json_data:
+            self.api_header = json.load(json_data)
+            
     def read_rds_table(self, database_connector, table_name):
         """
         This function is used to read the data from a user selected table in an AWS RDS instance and save
@@ -98,7 +100,6 @@ class DataExtractor():
             number_of_stores = None
         return number_of_stores
    
-    
     def retrieve_stores_data(self, endpoint_url, number_of_stores):
         """
         This function uses an API to request the json data relating to every store and save it in a
@@ -128,7 +129,6 @@ class DataExtractor():
             print("Failed to create dataframe, no data received")
             return None
 
- 
     def extract_from_s3(self, s3_address, file_name):
         """
         This function downloads data from an s3 bucket using a public S3 URI. It splits the URI into the
@@ -152,13 +152,3 @@ class DataExtractor():
             return None
 
 data_extractor = DataExtractor()
-
-
-
-
-
-
-
-
-
-

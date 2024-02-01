@@ -182,3 +182,5 @@ GROUP BY
 ORDER BY
     actual_time_taken DESC
 LIMIT 5
+
+select * from ddt_with_intervals where difference is null
